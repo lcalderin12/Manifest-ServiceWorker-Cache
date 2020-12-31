@@ -8,6 +8,7 @@ const iconFiles = iconSizes.map(
 
 const staticFilesToPreCache = [
     "/",
+    "index.html",
     "/manifest.webmanifest",
     "/styles.css",
     "/index.js",
@@ -27,6 +28,19 @@ self.addEventListener("install", function(evt) {
   self.skipWaiting();
 });
 
+// //the net ninja's approach: activate
+// self.addEventListener("activate", evt =>{
+//   evt.waitUntil(
+//    caches.keys().then(keys =>{
+//      console.log(keys);
+//      return Promise.all(keys
+//       .filter(key => key !== CACHE_NAME)
+//       .map(key = caches.delete(key))
+//       )
+//    })
+//   )
+// })
+
 // activate
 self.addEventListener("activate", function(evt) {
   evt.waitUntil(
@@ -45,44 +59,52 @@ self.addEventListener("activate", function(evt) {
   self.clients.claim();
 });
 
-//the net ninja's approach
-self.addEventListener("fetch", evt =>{
+//the net ninja's approach: fetch
+// self.addEventListener("fetch", evt =>{
+//   //for data response only
+//   if(evt.request.url.includes("/api/") === -1){
+//     evt.respondWith(
+//         caches.match(evt.request).then(cacheRes =>{
+//             return cacheRes || fetch(evt.request).then(fetchRes => {
+//               return caches.open(DATA_CACHE_NAME).then(cache =>{
+//                 cache.put(evt.request.url, fetchRes.clone());
+//                 return fetchRes;
+//               })
+//             })
+//         })
+//     )
+//       }
+// })
+
+fetch
+self.addEventListener("fetch", function(evt) {
+  const {url} = evt.request;
+  if (url.includes("/api/")) {
     evt.respondWith(
-        caches.match(evt.request).then(cacheRes =>{
-            return cacheRes || fetch(evt.request)
-        })
-    )
-})
+      caches.open(DATA_CACHE_NAME).then(cache => {
+        return fetch(evt.request)
+          .then(response => {
+            // If the response was good, clone it and store it in the cache.
+            if (response.status === 200) {
+              cache.put(evt.request, response.clone());
+            }
 
-// fetch
-// self.addEventListener("fetch", function(evt) {
-//   const {url} = evt.request;
-//   if (url.includes("/api/transaction")) {
-//     evt.respondWith(
-//       caches.open(DATA_CACHE_NAME).then(cache => {
-//         return fetch(evt.request)
-//           .then(response => {
-//             // If the response was good, clone it and store it in the cache.
-//             if (response.status === 200) {
-//               cache.put(evt.request, response.clone());
-//             }
-
-//             return response;
-//           })
-//           .catch(err => {
-//             // Network request failed, try to get it from the cache.
-//             return cache.match(evt.request);
-//           });
-//       }).catch(err => console.log(err))
-//     );
-//   } else {
-//     // respond from static cache, request is not for /api/*
-//     evt.respondWith(
-//       caches.open(CACHE_NAME).then(cache => {
-//         return cache.match(evt.request).then(response => {
-//           return response || fetch(evt.request);
-//         });
-//       })
-//     );
-//   }
-// });
+            return response;
+          })
+          .catch(err => {
+            // Network request failed, try to get it from the cache.
+            return cache.match(evt.request);
+          });
+      }).catch(err => console.log(err))
+    );
+  } else {
+    // respond from static cache, request is not for /api/*
+    evt.respondWith(
+      caches.open(CACHE_NAME).then(cache => {
+        return cache.match(evt.request).then(response => {
+          return response || fetch(evt.request);
+        });
+      })
+    );
+  }
+});
