@@ -43,5 +43,5 @@ Use this app to budget your income and cost in offline mode as well as online.
 [lcalderin12 Luis Calderin](https://github.com/lcalderin12)
 
 ## Repositories
-- [Heroku Deployed Link](https://github.com/lcalderin12/NoSQL-Workout-Tracker)
+- [Heroku Deployed Link](https://secure-inlet-41068.herokuapp.com/)
 - [Project Repo](https://github.com/lcalderin12/Manifest-ServiceWorker-Cache)
